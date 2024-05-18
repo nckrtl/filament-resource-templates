@@ -3,8 +3,8 @@
 namespace NckRtl\FilamentResourceTemplates\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Orchestra\Testbench\TestCase as Orchestra;
 use NckRtl\FilamentResourceTemplates\FilamentResourceTemplatesServiceProvider;
+use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
 {
