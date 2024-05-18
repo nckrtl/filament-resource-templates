@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace NckRtl\FilamentResourceTemplates\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class FilamentResourceTemplatesCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'filament-resource-templates';
 
     public $description = 'My command';
 

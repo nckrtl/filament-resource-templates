@@ -1,24 +1,27 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "nckrtl/filament-resource-templates",
+    "description": "This is my package filament-resource-templates",
     "keywords": [
-        ":vendor_name",
+        "Nick Retel",
         "laravel",
-        ":package_slug"
+        "filament-resource-templates"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/nckrtl/filament-resource-templates",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Nick Retel",
+            "email": "nick.retel@gmail.com",
             "role": "Developer"
         }
     ],
     "require": {
         "php": "^8.2",
-        "spatie/laravel-package-tools": "^1.16",
-        "illuminate/contracts": "^10.0||^11.0"
+        "filament/filament": "^3.2",
+        "filament/forms": "^3.2",
+        "illuminate/contracts": "^10.0||^11.0",
+        "spatie/laravel-data": "^4.6",
+        "spatie/laravel-package-tools": "^1.16"
     },
     "require-dev": {
         "laravel/pint": "^1.14",
@@ -35,19 +38,19 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "NckRtl\\FilamentResourceTemplates\\": "src/",
+            "NckRtl\\FilamentResourceTemplates\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "NckRtl\\FilamentResourceTemplates\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
     "scripts": {
         "post-autoload-dump": "@composer run prepare",
-        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "clear": "@php vendor/bin/testbench package:purge-filament-resource-templates --ansi",
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
         "build": [
             "@composer run prepare",
@@ -73,10 +76,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "NckRtl\\FilamentResourceTemplates\\FilamentResourceTemplatesServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "FilamentResourceTemplates": "NckRtl\\FilamentResourceTemplates\\Facades\\FilamentResourceTemplates"
             }
         }
     },
