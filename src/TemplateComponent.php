@@ -2,11 +2,7 @@
 
 namespace NckRtl\FilamentResourceTemplates;
 
-use ReflectionClass;
-use ReflectionProperty;
-use Spatie\LaravelData\Data;
-
-class TemplateComponent extends Data
+class TemplateComponent extends TemplateBase
 {
     public function __construct(array $properties)
     {
@@ -15,21 +11,6 @@ class TemplateComponent extends Data
                 $this->$property = $properties[$property] ?? null;
             }
         }
-    }
-
-    private function publicProperties(): array
-    {
-        return array_map(
-            fn ($property) => $property->getName(),
-            (new ReflectionClass($this))->getProperties(ReflectionProperty::IS_PUBLIC)
-        );
-    }
-
-    public function publicProperty(string $key): mixed
-    {
-        $properties = array_filter($this->publicProperties(), fn ($property) => $property->getName() == $key);
-
-        return reset($properties);
     }
 
     public function defaultOverrides(): array

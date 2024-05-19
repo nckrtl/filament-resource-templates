@@ -9,11 +9,8 @@ use Filament\Forms\Form;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use ReflectionClass;
-use ReflectionProperty;
-use Spatie\LaravelData\Data;
 
-class Template extends Data
+class Template extends TemplateBase
 {
     const NAME = 'Default';
 
@@ -27,7 +24,7 @@ class Template extends Data
 
     public array $content;
 
-    public function __construct(array $properties)
+    final public function __construct(array $properties)
     {
         if (empty($properties)) {
             return;
@@ -36,14 +33,6 @@ class Template extends Data
         foreach ($this->publicProperties() as $property) {
             $this->$property = $properties[$property] ?? null;
         }
-    }
-
-    private function publicProperties(): array
-    {
-        return array_map(
-            fn ($property) => $property->getName(),
-            (new ReflectionClass($this))->getProperties(ReflectionProperty::IS_PUBLIC)
-        );
     }
 
     public static function sections(): array
@@ -85,11 +74,9 @@ class Template extends Data
                 $model['content'][$sectionKey] = new $section([]);
             }
 
-            foreach ($model['content'][$sectionKey]->defaultOverrides() as $key => $value) {
-                $publicPropertyDefaultValue = $model['content'][$sectionKey]->publicProperty($key)?->getDefaultValue();
-
-                if (empty($model['content'][$sectionKey]->$key) || $value != $publicPropertyDefaultValue) {
-                    $model['content'][$sectionKey]->$key = $value;
+            foreach ($model['content'][$sectionKey]->defaultOverrides() as $key => $defaultValue) {
+                if (empty($model['content'][$sectionKey]->$key)) {
+                    $model['content'][$sectionKey]->$key = $defaultValue;
                 }
             }
         }
@@ -104,7 +91,6 @@ class Template extends Data
 
     public static function toFilamentData($data)
     {
-
         $dto = self::from($data);
 
         $filamentData = [];
@@ -118,6 +104,7 @@ class Template extends Data
         foreach (static::sections() as $sectionKey => $section) {
             $sectionContent = collect($dto->content[$sectionKey])->values()->filter()->toArray();
             if (! empty($sectionContent)) {
+
                 $filamentData = array_merge($filamentData, $dto->content[$sectionKey]->toFilamentData());
             }
         }
@@ -239,7 +226,7 @@ class Template extends Data
         $data = $data['template']::toFilamentData($data);
 
         $data['temp_content'][Template::getTemplateName($data['template'])] = $data;
-        unset($data['content']);
+        $data['content'] = []; // Instead of unsetting, set content to an empty array
 
         return $data;
     }

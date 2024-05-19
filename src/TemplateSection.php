@@ -2,15 +2,13 @@
 
 namespace NckRtl\FilamentResourceTemplates;
 
-use ReflectionClass;
-use ReflectionProperty;
-use Spatie\LaravelData\Data;
+use ReflectionNamedType;
 
-class TemplateSection extends Data
+class TemplateSection extends TemplateBase
 {
     const SECTION_KEY = '';
 
-    public function __construct(array $properties)
+    final public function __construct(array $properties)
     {
         foreach ($properties as $propertyName => $propertyValue) {
             $property = $this->publicProperty($propertyName);
@@ -21,31 +19,17 @@ class TemplateSection extends Data
 
             $propertyType = $property->getType();
 
-            if ($propertyType->isBuiltin()) {
+            if ($propertyType instanceof ReflectionNamedType && $propertyType->isBuiltin()) {
                 $this->$propertyName = (new PropertyValue(value: $propertyValue))->value;
 
                 continue;
             }
 
-            $className = $propertyType->getName();
-            $this->$propertyName = new $className($propertyValue ?? []);
-        }
-    }
-
-    public function publicProperties(): array
-    {
-        return (new ReflectionClass($this))->getProperties(ReflectionProperty::IS_PUBLIC);
-    }
-
-    public function publicProperty(string $key): ?ReflectionProperty
-    {
-        foreach ($this->publicProperties() as $property) {
-            if ($property->getName() === $key) {
-                return $property;
+            if ($propertyType instanceof ReflectionNamedType) {
+                $className = $propertyType->getName();
+                $this->$propertyName = new $className($propertyValue ?? []);
             }
         }
-
-        return null;
     }
 
     public function defaultOverrides(): array
@@ -87,6 +71,7 @@ class TemplateSection extends Data
             }
 
             $isDefaultValue = ($value == $defaultInstance->$key || $defaultInstance->defaultOverride($key) == $value);
+
             $data["{$parentKey}_{$key}"] = $isDefaultValue ? null : $value;
         }
 
@@ -103,7 +88,7 @@ class TemplateSection extends Data
         $values = [];
         foreach ($data as $key => $value) {
             $defaultValue = $defaultValueOverrides[$key] ?? $section->$key ?? null;
-            $values[$key] = (new PropertyValue(defaultValue: $defaultValue, value: $value))->value;
+            $values[$key] = (new PropertyValue(value: $value, defaultValue: $defaultValue))->value;
         }
 
         return new static($values);
