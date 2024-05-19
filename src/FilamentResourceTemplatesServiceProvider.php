@@ -2,9 +2,9 @@
 
 namespace NckRtl\FilamentResourceTemplates;
 
+use NckRtl\FilamentResourceTemplates\Commands\FilamentResourceTemplatesCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use NckRtl\FilamentResourceTemplates\Commands\FilamentResourceTemplatesCommand;
 
 class FilamentResourceTemplatesServiceProvider extends PackageServiceProvider
 {
