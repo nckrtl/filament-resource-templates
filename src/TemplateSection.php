@@ -2,6 +2,7 @@
 
 namespace NckRtl\FilamentResourceTemplates;
 
+use ReflectionClass;
 use ReflectionNamedType;
 
 class TemplateSection extends TemplateBase
@@ -102,7 +103,12 @@ class TemplateSection extends TemplateBase
     public function clearDefaultValues(): self
     {
         foreach ($this->publicProperties() as $property) {
+            if (gettype($property) === 'string') {
+                $property = (new ReflectionClass($this))->getProperty($property);
+            }
+
             $propertyName = $property->getName();
+
             if ($property->getDefaultValue() == $this->$propertyName) {
                 $this->$propertyName = null;
             }

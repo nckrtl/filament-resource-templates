@@ -44,8 +44,8 @@ class Template extends TemplateBase
     {
         foreach (static::sections() as $sectionKey => $section) {
             $this->content[$sectionKey] = array_key_exists($sectionKey, $this->content)
-                ? (new $section([]))::from($this->content[$sectionKey])
-                : (new $section([]))::from([]);
+                ? (new $section([]))::fromArray($this->content[$sectionKey])
+                : (new $section([]))::fromArray([]);
         }
 
         return $this;
@@ -69,7 +69,7 @@ class Template extends TemplateBase
 
         foreach (static::sections() as $sectionKey => $section) {
             if (array_key_exists($sectionKey, $model['content'])) {
-                $model['content'][$sectionKey] = (new $section([]))::from($model['content'][$sectionKey]);
+                $model['content'][$sectionKey] = (new $section([]))::fromArray($model['content'][$sectionKey]);
             } else {
                 $model['content'][$sectionKey] = new $section([]);
             }
@@ -91,7 +91,7 @@ class Template extends TemplateBase
 
     public static function toFilamentData($data)
     {
-        $dto = self::from($data);
+        $dto = self::fromArray($data);
 
         $filamentData = [];
 
@@ -102,7 +102,7 @@ class Template extends TemplateBase
         }
 
         foreach (static::sections() as $sectionKey => $section) {
-            $sectionContent = collect($dto->content[$sectionKey])->values()->filter()->toArray();
+            $sectionContent = collect($dto->content[$sectionKey]->all())->values()->filter()->toArray();
             if (! empty($sectionContent)) {
 
                 $filamentData = array_merge($filamentData, $dto->content[$sectionKey]->toFilamentData());
@@ -112,15 +112,16 @@ class Template extends TemplateBase
         return $filamentData;
     }
 
-    public static function fromFilamentData($data): self
+    public static function fromFilamentData(array $data): self
     {
-        $pageData = self::from($data);
+        $pageData = self::fromArray($data);
+
         $pageData->content = [];
 
         $groupedContent = static::groupFilamentData($data['content']);
 
         foreach (static::sections() as $sectionKey => $section) {
-            $pageData->content[$sectionKey] = (new $section([]))::from($groupedContent[$sectionKey])->clearDefaultValues();
+            $pageData->content[$sectionKey] = (new $section([]))::fromArray($groupedContent[$sectionKey])->clearDefaultValues();
         }
 
         return $pageData;
@@ -223,6 +224,7 @@ class Template extends TemplateBase
 
     public static function mutateFormDataBeforeFill(array $data): array
     {
+
         $data = $data['template']::toFilamentData($data);
 
         $data['temp_content'][Template::getTemplateName($data['template'])] = $data;
@@ -242,10 +244,12 @@ class Template extends TemplateBase
         $data['content'] = $data['temp_content'][Template::getTemplateName($data['template'])];
 
         unset($data['temp_content']);
+
         $data['content'] = $data['template']::fromFilamentData($data)->content;
 
         foreach ($data['content'] as $key => $section) {
-            $data['content'][$key] = $section->toArray();
+
+            $data['content'][$key] = $section->all();
         }
 
         $data['content'] = Template::sift($data['content']);
