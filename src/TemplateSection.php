@@ -2,6 +2,7 @@
 
 namespace NckRtl\FilamentResourceTemplates;
 
+use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionNamedType;
 
@@ -79,9 +80,15 @@ class TemplateSection extends TemplateBase
         return $data;
     }
 
-    public static function fromArray($data): self
+    public static function fromArray($data, $model = null): self
     {
-        return self::valuesFromData(new static([]), $data);
+        $sectionData = self::valuesFromData(new static([]), $data);
+
+        if (! Str::contains(request()->path(), 'admin') && ! Str::contains(request()->path(), 'livewire/update')) {
+            $sectionData->afterFrom($model);
+        }
+
+        return $sectionData;
     }
 
     public static function valuesFromData($section, $data, $defaultValueOverrides = []): self
@@ -95,9 +102,8 @@ class TemplateSection extends TemplateBase
         return new static($values);
     }
 
-    public function afterFrom($page): void
+    public function afterFrom($model): void
     {
-        // Implement this method as needed
     }
 
     public function clearDefaultValues(): self

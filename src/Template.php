@@ -51,8 +51,10 @@ class Template extends TemplateBase
         return $this;
     }
 
-    public static function fromArray($model): self
+    public static function fromArray($rawModel): self
     {
+        $model = $rawModel;
+
         if ($model instanceof Model) {
             $model = $model->toArray();
         }
@@ -69,7 +71,7 @@ class Template extends TemplateBase
 
         foreach (static::sections() as $sectionKey => $section) {
             if (array_key_exists($sectionKey, $model['content'])) {
-                $model['content'][$sectionKey] = (new $section([]))::fromArray($model['content'][$sectionKey]);
+                $model['content'][$sectionKey] = (new $section([]))::fromArray($model['content'][$sectionKey], $rawModel);
             } else {
                 $model['content'][$sectionKey] = new $section([]);
             }
