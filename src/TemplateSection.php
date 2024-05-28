@@ -2,7 +2,6 @@
 
 namespace NckRtl\FilamentResourceTemplates;
 
-use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionNamedType;
 
@@ -10,7 +9,7 @@ class TemplateSection extends TemplateBase
 {
     const SECTION_KEY = '';
 
-    final public function __construct(array $properties)
+    final public function __construct(array $properties = [])
     {
         foreach ($properties as $propertyName => $propertyValue) {
             $property = $this->publicProperty($propertyName);
@@ -62,7 +61,7 @@ class TemplateSection extends TemplateBase
         $data = [];
         $properties = collect(get_object_vars($class))
             ->filter(fn ($value, $key) => ! str_starts_with($key, '_'));
-        $defaultInstance = new $class([]);
+        $defaultInstance = new $class();
 
         foreach ($properties as $key => $value) {
             if ($value instanceof TemplateComponent) {
@@ -80,13 +79,9 @@ class TemplateSection extends TemplateBase
         return $data;
     }
 
-    public static function fromArray($data, $model = null): self
+    public static function fromArray($data): self
     {
-        $sectionData = self::valuesFromData(new static([]), $data);
-
-        if (! Str::contains(request()->path(), 'admin') && ! Str::contains(request()->path(), 'livewire/update')) {
-            $sectionData->afterFrom($model);
-        }
+        $sectionData = self::valuesFromData(new static(), $data);
 
         return $sectionData;
     }
@@ -102,8 +97,13 @@ class TemplateSection extends TemplateBase
         return new static($values);
     }
 
-    public function afterFrom($model): void
+    public function mutateBeforeDisplay($model): void
     {
+    }
+
+    public static function mutateDataBeforeCreateOrUpdate(array $data): array
+    {
+        return $data;
     }
 
     public function clearDefaultValues(): self

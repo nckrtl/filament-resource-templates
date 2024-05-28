@@ -15,6 +15,6 @@ class TemplateResource extends Resource
 
     public static function getTemplateClasses(): Collection
     {
-        return collect([]);
+        return collect();
     }
 }

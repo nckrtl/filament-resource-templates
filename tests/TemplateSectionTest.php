@@ -47,7 +47,7 @@ test('constructor initializes properties correctly', function () {
 });
 
 test('defaultOverrides method returns correct default overrides', function () {
-    $mockClass = new class([]) extends TemplateSection
+    $mockClass = new class() extends TemplateSection
     {
         public function defaultOverrides(): array
         {
@@ -60,7 +60,7 @@ test('defaultOverrides method returns correct default overrides', function () {
 });
 
 test('defaultOverride method returns correct value', function () {
-    $mockClass = new class([]) extends TemplateSection
+    $mockClass = new class() extends TemplateSection
     {
         public function defaultOverrides(): array
         {
@@ -78,7 +78,7 @@ test('key method returns correct key', function () {
 });
 
 test('defaultValue method returns correct value', function () {
-    $mockClass = new class([]) extends TemplateSection
+    $mockClass = new class() extends TemplateSection
     {
         public string $example_property = 'default_value';
 
@@ -149,7 +149,7 @@ test('valuesFromData method works correctly', function () {
         }
     };
 
-    $templateSection = $mockClass::valuesFromData(new $mockClass([]), $data);
+    $templateSection = $mockClass::valuesFromData(new $mockClass(), $data);
     expect($templateSection->example_property)->toBe('value');
 });
 
@@ -173,4 +173,22 @@ test('clearDefaultValues method works correctly', function () {
     $templateSection->clearDefaultValues();
 
     expect($templateSection->example_property)->toBeNull();
+});
+
+test('mutateBeforeDisplay method works correctly', function () {
+    $mockClass = new class() extends TemplateSection
+    {
+        public ?string $example_property = 'default_value';
+
+        public function mutateBeforeDisplay($model): void
+        {
+            $model->example_property = 'mutated_value';
+        }
+    };
+
+    $model = new $mockClass();
+
+    $mockClass->mutateBeforeDisplay($model);
+
+    expect($model->example_property)->toBe('mutated_value');
 });

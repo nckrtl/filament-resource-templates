@@ -4,7 +4,7 @@ namespace NckRtl\FilamentResourceTemplates;
 
 class TemplateComponent extends TemplateBase
 {
-    public function __construct(array $properties)
+    public function __construct(array $properties = [])
     {
         if (! empty($properties)) {
             foreach ($this->publicProperties() as $property) {

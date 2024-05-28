@@ -24,7 +24,7 @@ class Template extends TemplateBase
 
     public array $content;
 
-    final public function __construct(array $properties)
+    final public function __construct(array $properties = [])
     {
         if (empty($properties)) {
             return;
@@ -44,14 +44,14 @@ class Template extends TemplateBase
     {
         foreach (static::sections() as $sectionKey => $section) {
             $this->content[$sectionKey] = array_key_exists($sectionKey, $this->content)
-                ? (new $section([]))::fromArray($this->content[$sectionKey])
-                : (new $section([]))::fromArray([]);
+                ? (new $section())::fromArray($this->content[$sectionKey])
+                : (new $section())::fromArray();
         }
 
         return $this;
     }
 
-    public static function fromArray($rawModel): self
+    public static function fromArray($rawModel, $forDisplay = false): self
     {
         $model = $rawModel;
 
@@ -65,15 +65,19 @@ class Template extends TemplateBase
 
         $model = array_filter(
             $model,
-            fn ($value, $key) => in_array($key, (new static([]))->publicProperties()),
+            fn ($value, $key) => in_array($key, (new static())->publicProperties()),
             ARRAY_FILTER_USE_BOTH
         );
 
         foreach (static::sections() as $sectionKey => $section) {
             if (array_key_exists($sectionKey, $model['content'])) {
-                $model['content'][$sectionKey] = (new $section([]))::fromArray($model['content'][$sectionKey], $rawModel);
+                $model['content'][$sectionKey] = (new $section())::fromArray($model['content'][$sectionKey]);
             } else {
-                $model['content'][$sectionKey] = new $section([]);
+                $model['content'][$sectionKey] = new $section();
+            }
+
+            if($forDisplay) {
+                $model['content'][$sectionKey]->mutateBeforeDisplay($rawModel);
             }
 
             foreach ($model['content'][$sectionKey]->defaultOverrides() as $key => $defaultValue) {
@@ -86,9 +90,14 @@ class Template extends TemplateBase
         return new static($model);
     }
 
+    public static function forDisplay($model): self
+    {
+        return self::fromArray($model, forDisplay: true);
+    }
+
     public static function fromModel($model): self
     {
-        return self::fromArray($model->toArray());
+        return self::fromArray($model);
     }
 
     public static function toFilamentData($data)
@@ -97,7 +106,7 @@ class Template extends TemplateBase
 
         $filamentData = [];
 
-        foreach ((new static([]))->publicProperties() as $property) {
+        foreach ((new static())->publicProperties() as $property) {
             if ($property !== 'content') {
                 $filamentData[$property] = $dto->$property;
             }
@@ -123,7 +132,7 @@ class Template extends TemplateBase
         $groupedContent = static::groupFilamentData($data['content']);
 
         foreach (static::sections() as $sectionKey => $section) {
-            $pageData->content[$sectionKey] = (new $section([]))::fromArray($groupedContent[$sectionKey])->clearDefaultValues();
+            $pageData->content[$sectionKey] = (new $section())::fromArray($groupedContent[$sectionKey])->clearDefaultValues();
         }
 
         return $pageData;
@@ -192,7 +201,7 @@ class Template extends TemplateBase
 
         foreach (static::sections() as $sectionKey => $section) {
             if (! array_key_exists($sectionKey, static::DEFAULT_SECTIONS)) {
-                $mainSection[] = (new $section([]))::form() ?? [];
+                $mainSection[] = (new $section())::form() ?? [];
             }
         }
 
@@ -226,22 +235,25 @@ class Template extends TemplateBase
 
     public static function mutateFormDataBeforeFill(array $data): array
     {
-
         $data = $data['template']::toFilamentData($data);
 
         $data['temp_content'][Template::getTemplateName($data['template'])] = $data;
-        $data['content'] = []; // Instead of unsetting, set content to an empty array
+        $data['content'] = [];
 
         return $data;
     }
 
     public static function mutateFormDataBeforeCreateOrUpdate(array $data): array
     {
-        foreach ((new ($data['template'])([]))->publicProperties() as $property) {
+        $template = new ($data['template'])();
+
+        foreach ($template->publicProperties() as $property) {
             if (! in_array($property, ['content', 'template'])) {
                 $data[$property] = $data['temp_content'][Template::getTemplateName($data['template'])][$property];
             }
         }
+
+        $data = $template->mutateDataBeforeCreateOrUpdate($data);
 
         $data['content'] = $data['temp_content'][Template::getTemplateName($data['template'])];
 
@@ -250,12 +262,17 @@ class Template extends TemplateBase
         $data['content'] = $data['template']::fromFilamentData($data)->content;
 
         foreach ($data['content'] as $key => $section) {
-
             $data['content'][$key] = $section->all();
+            $data['content'][$key] = $section->mutateDataBeforeCreateOrUpdate($data['content'][$key]);
         }
 
         $data['content'] = Template::sift($data['content']);
 
+        return $data;
+    }
+
+    public static function mutateDataBeforeCreateOrUpdate(array $data): array
+    {
         return $data;
     }
 }
