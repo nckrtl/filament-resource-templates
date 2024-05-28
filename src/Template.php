@@ -76,7 +76,7 @@ class Template extends TemplateBase
                 $model['content'][$sectionKey] = new $section();
             }
 
-            if($forDisplay) {
+            if ($forDisplay) {
                 $model['content'][$sectionKey]->mutateBeforeDisplay($rawModel);
             }
 
