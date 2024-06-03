@@ -21,7 +21,14 @@ class TemplateSection extends TemplateBase
             $propertyType = $property->getType();
 
             if ($propertyType instanceof ReflectionNamedType && $propertyType->isBuiltin()) {
-                $this->$propertyName = (new PropertyValue(value: $propertyValue))->value;
+
+                $convertedPropertyValue = (new PropertyValue(value: $propertyValue))->value;
+
+                if ($propertyType->getName() === 'string' && is_array($convertedPropertyValue)) {
+                    $convertedPropertyValue = json_encode($convertedPropertyValue);
+                }
+
+                $this->$propertyName = $convertedPropertyValue;
 
                 continue;
             }
@@ -81,6 +88,7 @@ class TemplateSection extends TemplateBase
 
     public static function fromArray($data): self
     {
+
         $sectionData = self::valuesFromData(new static(), $data);
 
         return $sectionData;

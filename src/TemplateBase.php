@@ -8,10 +8,10 @@ use Spatie\LaravelData\Data;
 
 class TemplateBase extends Data
 {
-    public function publicProperties(): array
+    public function publicProperties($fullProperty = false): array
     {
         return array_map(
-            fn ($property) => $property->getName(),
+            fn ($property) => $fullProperty ? $property : $property->getName(),
             (new ReflectionClass($this))->getProperties(ReflectionProperty::IS_PUBLIC)
         );
     }

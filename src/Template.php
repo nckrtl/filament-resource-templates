@@ -7,6 +7,7 @@ use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -30,8 +31,15 @@ class Template extends TemplateBase
             return;
         }
 
-        foreach ($this->publicProperties() as $property) {
-            $this->$property = $properties[$property] ?? null;
+        foreach ($this->publicProperties(fullProperty: true) as $property) {
+            $propertyName = $property->getName();
+            $propertyType = $property->getType();
+
+            if (! $propertyType->isBuiltin() && new ($propertyType->getName()) instanceof Carbon && gettype($properties[$propertyName]) === 'string') {
+                $properties[$propertyName] = Carbon::parse($properties[$propertyName]);
+            }
+
+            $this->$propertyName = $properties[$propertyName] ?? null;
         }
     }
 
@@ -70,13 +78,13 @@ class Template extends TemplateBase
         );
 
         foreach (static::sections() as $sectionKey => $section) {
-            if (array_key_exists($sectionKey, $model['content'])) {
+            if (array_key_exists($sectionKey, $model['content'] ?? [])) {
                 $model['content'][$sectionKey] = (new $section())::fromArray($model['content'][$sectionKey]);
             } else {
                 $model['content'][$sectionKey] = new $section();
             }
 
-            if($forDisplay) {
+            if ($forDisplay) {
                 $model['content'][$sectionKey]->mutateBeforeDisplay($rawModel);
             }
 
@@ -87,7 +95,13 @@ class Template extends TemplateBase
             }
         }
 
-        return new static($model);
+        $model = new static($model);
+
+        if ($forDisplay) {
+            $model->mutateBeforeDisplay($rawModel);
+        }
+
+        return $model;
     }
 
     public static function forDisplay($model): self
@@ -253,13 +267,13 @@ class Template extends TemplateBase
             }
         }
 
-        $data = $template->mutateDataBeforeCreateOrUpdate($data);
-
         $data['content'] = $data['temp_content'][Template::getTemplateName($data['template'])];
 
         unset($data['temp_content']);
 
         $data['content'] = $data['template']::fromFilamentData($data)->content;
+
+        $data = $template->mutateDataBeforeCreateOrUpdate($data);
 
         foreach ($data['content'] as $key => $section) {
             $data['content'][$key] = $section->all();
@@ -274,5 +288,10 @@ class Template extends TemplateBase
     public static function mutateDataBeforeCreateOrUpdate(array $data): array
     {
         return $data;
+    }
+
+    public function mutateBeforeDisplay($model): void
+    {
+
     }
 }
