@@ -263,7 +263,7 @@ class Template extends TemplateBase
 
         foreach ($template->publicProperties() as $property) {
             if (! in_array($property, ['content', 'template'])) {
-                $data[$property] = $data['temp_content'][Template::getTemplateName($data['template'])][$property];
+                $data[$property] = $data['temp_content'][Template::getTemplateName($data['template'])][$property] ?? null;
             }
         }
 
