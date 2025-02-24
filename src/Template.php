@@ -293,7 +293,5 @@ class Template extends TemplateBase
         return $data;
     }
 
-    public function mutateBeforeDisplay($model): void
-    {
-    }
+    public function mutateBeforeDisplay($model): void {}
 }
