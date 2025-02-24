@@ -68,7 +68,7 @@ class TemplateSection extends TemplateBase
         $data = [];
         $properties = collect(get_object_vars($class))
             ->filter(fn ($value, $key) => ! str_starts_with($key, '_'));
-        $defaultInstance = new $class();
+        $defaultInstance = new $class;
 
         foreach ($properties as $key => $value) {
             if ($value instanceof TemplateComponent) {
@@ -89,7 +89,7 @@ class TemplateSection extends TemplateBase
     public static function fromArray($data): self
     {
 
-        $sectionData = self::valuesFromData(new static(), $data);
+        $sectionData = self::valuesFromData(new static, $data);
 
         return $sectionData;
     }
@@ -105,9 +105,7 @@ class TemplateSection extends TemplateBase
         return new static($values);
     }
 
-    public function mutateBeforeDisplay($model): void
-    {
-    }
+    public function mutateBeforeDisplay($model): void {}
 
     public static function mutateDataBeforeCreateOrUpdate(array $data): array
     {
