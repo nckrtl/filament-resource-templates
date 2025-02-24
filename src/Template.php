@@ -23,6 +23,9 @@ class Template extends TemplateBase
 
     public string $template;
 
+    /**
+     * @var array<TemplateSection>
+     */
     public array $content;
 
     final public function __construct(array $properties = [])
@@ -52,8 +55,8 @@ class Template extends TemplateBase
     {
         foreach (static::sections() as $sectionKey => $section) {
             $this->content[$sectionKey] = array_key_exists($sectionKey, $this->content)
-                ? (new $section())::fromArray($this->content[$sectionKey])
-                : (new $section())::fromArray();
+                ? (new $section)::fromArray($this->content[$sectionKey])
+                : (new $section)::fromArray();
         }
 
         return $this;
@@ -73,15 +76,15 @@ class Template extends TemplateBase
 
         $model = array_filter(
             $model,
-            fn ($value, $key) => in_array($key, (new static())->publicProperties()),
+            fn ($value, $key) => in_array($key, (new static)->publicProperties()),
             ARRAY_FILTER_USE_BOTH
         );
 
         foreach (static::sections() as $sectionKey => $section) {
             if (array_key_exists($sectionKey, $model['content'] ?? [])) {
-                $model['content'][$sectionKey] = (new $section())::fromArray($model['content'][$sectionKey]);
+                $model['content'][$sectionKey] = (new $section)::fromArray($model['content'][$sectionKey]);
             } else {
-                $model['content'][$sectionKey] = new $section();
+                $model['content'][$sectionKey] = new $section;
             }
 
             if ($forDisplay) {
@@ -120,7 +123,7 @@ class Template extends TemplateBase
 
         $filamentData = [];
 
-        foreach ((new static())->publicProperties() as $property) {
+        foreach ((new static)->publicProperties() as $property) {
             if ($property !== 'content') {
                 $filamentData[$property] = $dto->$property;
             }
@@ -146,7 +149,7 @@ class Template extends TemplateBase
         $groupedContent = static::groupFilamentData($data['content']);
 
         foreach (static::sections() as $sectionKey => $section) {
-            $pageData->content[$sectionKey] = (new $section())::fromArray($groupedContent[$sectionKey])->clearDefaultValues();
+            $pageData->content[$sectionKey] = (new $section)::fromArray($groupedContent[$sectionKey])->clearDefaultValues();
         }
 
         return $pageData;
@@ -215,7 +218,7 @@ class Template extends TemplateBase
 
         foreach (static::sections() as $sectionKey => $section) {
             if (! array_key_exists($sectionKey, static::DEFAULT_SECTIONS)) {
-                $mainSection[] = (new $section())::form() ?? [];
+                $mainSection[] = (new $section)::form() ?? [];
             }
         }
 
@@ -292,6 +295,5 @@ class Template extends TemplateBase
 
     public function mutateBeforeDisplay($model): void
     {
-
     }
 }
