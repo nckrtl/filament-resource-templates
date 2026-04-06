@@ -2,9 +2,9 @@
 
 namespace NckRtl\FilamentResourceTemplates\Tests\MockClasses;
 
-use NckRtl\FilamentResourceTemplates\Template;
+use NckRtl\FilamentResourceTemplates\TemplateOLD;
 
-class MockTemplate extends Template
+class MockTemplate extends TemplateOLD
 {
     const NAME = 'default';
 

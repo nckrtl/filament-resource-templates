@@ -1,6 +1,6 @@
 <?php
 
-use NckRtl\FilamentResourceTemplates\TemplateSection;
+use NckRtl\FilamentResourceTemplates\SectionTemplate;
 use ReflectionProperty;
 
 class MockTemplateComponent
@@ -27,7 +27,7 @@ beforeEach(function () {
 
 test('constructor initializes properties correctly', function () {
     $properties = ['example_property' => 'example_value'];
-    $mockClass = new class($properties) extends TemplateSection
+    $mockClass = new class($properties) extends SectionTemplate
     {
         public string $example_property;
 
@@ -36,7 +36,7 @@ test('constructor initializes properties correctly', function () {
             return new ReflectionProperty($this, $key);
         }
 
-        public function publicProperties(): array
+        public function publicProperties($fullProperty = false): array
         {
             return [(new ReflectionProperty($this, 'example_property'))];
         }
@@ -47,7 +47,7 @@ test('constructor initializes properties correctly', function () {
 });
 
 test('defaultOverrides method returns correct default overrides', function () {
-    $mockClass = new class extends TemplateSection
+    $mockClass = new class extends SectionTemplate
     {
         public function defaultOverrides(): array
         {
@@ -60,7 +60,7 @@ test('defaultOverrides method returns correct default overrides', function () {
 });
 
 test('defaultOverride method returns correct value', function () {
-    $mockClass = new class extends TemplateSection
+    $mockClass = new class extends SectionTemplate
     {
         public function defaultOverrides(): array
         {
@@ -72,13 +72,13 @@ test('defaultOverride method returns correct value', function () {
     expect($defaultOverride)->toBe('default_value');
 });
 
-test('key method returns correct key', function () {
-    $key = TemplateSection::key('example');
-    expect($key)->toBe('_example');
-});
+// test('key method returns correct key', function () {
+//     $key = SectionTemplate::key('example');
+//     expect($key)->toBe('_example');
+// });
 
 test('defaultValue method returns correct value', function () {
-    $mockClass = new class extends TemplateSection
+    $mockClass = new class extends SectionTemplate
     {
         public string $example_property = 'default_value';
 
@@ -87,7 +87,7 @@ test('defaultValue method returns correct value', function () {
             return new ReflectionProperty($this, $key);
         }
 
-        public function publicProperties(): array
+        public function publicProperties($fullProperty = false): array
         {
             return [(new ReflectionProperty($this, 'example_property'))];
         }
@@ -98,22 +98,22 @@ test('defaultValue method returns correct value', function () {
 });
 
 test('toFilamentData method returns correct data', function () {
-    $mockClass = new class(['example_property' => 'value']) extends TemplateSection
+    $mockClass = new class(['example_property' => 'value']) extends SectionTemplate
     {
-        const SECTION_KEY = 'example';
+        const KEY = 'example';
 
-        public ?string $example_property = '';
+        public ?string $some_property = '';
     };
 
-    $templateSection = new $mockClass(['example_property' => 'value']);
+    $templateSection = new $mockClass(['some_property' => 'value']);
     $filamentData = $templateSection->toFilamentData();
 
-    expect($filamentData)->toBe(['example_example_property' => 'value']);
+    expect($filamentData)->toBe(['example_some_property' => 'value']);
 });
 
 test('fromArray method works correctly', function () {
     $data = ['example_property' => 'value'];
-    $mockClass = new class($data) extends TemplateSection
+    $mockClass = new class($data) extends SectionTemplate
     {
         public string $example_property;
 
@@ -122,7 +122,7 @@ test('fromArray method works correctly', function () {
             return new ReflectionProperty($this, $key);
         }
 
-        public function publicProperties(): array
+        public function publicProperties($fullProperty = false): array
         {
             return [(new ReflectionProperty($this, 'example_property'))];
         }
@@ -134,7 +134,7 @@ test('fromArray method works correctly', function () {
 
 test('valuesFromData method works correctly', function () {
     $data = ['example_property' => 'value'];
-    $mockClass = new class($data) extends TemplateSection
+    $mockClass = new class($data) extends SectionTemplate
     {
         public string $example_property;
 
@@ -143,7 +143,7 @@ test('valuesFromData method works correctly', function () {
             return new ReflectionProperty($this, $key);
         }
 
-        public function publicProperties(): array
+        public function publicProperties($fullProperty = false): array
         {
             return [(new ReflectionProperty($this, 'example_property'))];
         }
@@ -154,7 +154,7 @@ test('valuesFromData method works correctly', function () {
 });
 
 test('clearDefaultValues method works correctly', function () {
-    $mockClass = new class(['example_property' => 'value']) extends TemplateSection
+    $mockClass = new class(['example_property' => 'value']) extends SectionTemplate
     {
         public ?string $example_property = 'default_value';
 
@@ -163,7 +163,7 @@ test('clearDefaultValues method works correctly', function () {
             return new ReflectionProperty($this, $key);
         }
 
-        public function publicProperties(): array
+        public function publicProperties($fullProperty = false): array
         {
             return [(new ReflectionProperty($this, 'example_property'))];
         }
@@ -176,7 +176,7 @@ test('clearDefaultValues method works correctly', function () {
 });
 
 test('mutateBeforeDisplay method works correctly', function () {
-    $mockClass = new class extends TemplateSection
+    $mockClass = new class extends SectionTemplate
     {
         public ?string $example_property = 'default_value';
 

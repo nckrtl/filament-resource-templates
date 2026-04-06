@@ -1,6 +1,6 @@
 <?php
 
-namespace NckRtl\FilamentResourceTemplates;
+namespace NckRtl\FilamentResourceTemplates\OLD;
 
 use Illuminate\Support\Str;
 

@@ -2,157 +2,90 @@
 
 namespace NckRtl\FilamentResourceTemplates;
 
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Component;
+use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Schema as IlluminateSchema;
+use NckRtl\FilamentResourceTemplates\Traits\HasPublicProperties;
+use Spatie\LaravelData\Data;
 
-class Template extends TemplateBase
+abstract class Template extends Data
 {
-    const NAME = 'Default';
+    use HasPublicProperties;
 
-    const DEFAULT_SECTIONS = [];
+    public static string $filamentResource;
 
-    const SECTIONS = [];
-
-    const ADDITIONAL_PROPERTIES = [];
-
-    public string $template;
-
-    /**
-     * @var array<TemplateSection>
-     */
-    public array $content;
-
-    final public function __construct(array $properties = [])
+    public static function schema(): array
     {
-        if (empty($properties)) {
-            return;
-        }
-
-        foreach ($this->publicProperties(fullProperty: true) as $property) {
-            $propertyName = $property->getName();
-            $propertyType = $property->getType();
-
-            if (! $propertyType->isBuiltin() && new ($propertyType->getName()) instanceof Carbon && gettype($properties[$propertyName]) === 'string') {
-                $properties[$propertyName] = Carbon::parse($properties[$propertyName]);
-            }
-
-            $this->$propertyName = $properties[$propertyName] ?? null;
-        }
+        return [];
     }
 
     public static function sections(): array
     {
-        return array_merge(static::DEFAULT_SECTIONS, static::SECTIONS);
+        return [];
     }
 
-    public function convertContent()
+    public static function form(Schema $schema, array $templates): Schema
     {
-        foreach (static::sections() as $sectionKey => $section) {
-            $this->content[$sectionKey] = array_key_exists($sectionKey, $this->content)
-                ? (new $section)::fromArray($this->content[$sectionKey])
-                : (new $section)::fromArray();
-        }
+        return $schema->components([
+            Select::make('template')
+                ->columnSpanFull()
+                ->reactive()
+                ->options(self::getTemplates($templates))
+                ->default(array_key_first(self::getTemplates($templates))),
 
-        return $this;
+            ...self::getTemplateSchemas($templates),
+        ]);
     }
 
-    public static function fromArray($rawModel, $forDisplay = false): self
+    public static function templateSchema(string $template): array
     {
-        $model = $rawModel;
+        $schema = $template::schema();
 
-        if ($model instanceof Model) {
-            $model = $model->toArray();
+        foreach ($template::sections() as $section) {
+            $schema = array_merge($schema, [self::rebuildWithPrefixedKeys($section::schema()[0], $section::key())]);
         }
 
-        if (! array_key_exists('content', $model)) {
-            $model['content'] = [];
-        }
+        return $schema;
 
-        $model = array_filter(
-            $model,
-            fn ($value, $key) => in_array($key, (new static)->publicProperties()),
-            ARRAY_FILTER_USE_BOTH
-        );
-
-        foreach (static::sections() as $sectionKey => $section) {
-            if (array_key_exists($sectionKey, $model['content'] ?? [])) {
-                $model['content'][$sectionKey] = (new $section)::fromArray($model['content'][$sectionKey]);
-            } else {
-                $model['content'][$sectionKey] = new $section;
-            }
-
-            if ($forDisplay) {
-                $model['content'][$sectionKey]->mutateBeforeDisplay($rawModel);
-            }
-
-            foreach ($model['content'][$sectionKey]->defaultOverrides() as $key => $defaultValue) {
-                if (empty($model['content'][$sectionKey]->$key)) {
-                    $model['content'][$sectionKey]->$key = $defaultValue;
-                }
-            }
-        }
-
-        $model = new static($model);
-
-        if ($forDisplay) {
-            $model->mutateBeforeDisplay($rawModel);
-        }
-
-        return $model;
     }
 
-    public static function forDisplay($model): self
+    public static function getTemplates(array $templates): array
     {
-        return self::fromArray($model, forDisplay: true);
-    }
+        $templateList = [];
 
-    public static function fromModel($model): self
-    {
-        return self::fromArray($model);
-    }
-
-    public static function toFilamentData($data)
-    {
-        $dto = self::fromArray($data);
-
-        $filamentData = [];
-
-        foreach ((new static)->publicProperties() as $property) {
-            if ($property !== 'content') {
-                $filamentData[$property] = $dto->$property;
-            }
+        foreach ($templates as $template) {
+            $templateList[$template] = $template::label();
         }
 
-        foreach (static::sections() as $sectionKey => $section) {
-            $sectionContent = collect($dto->content[$sectionKey]->all())->values()->filter()->toArray();
-            if (! empty($sectionContent)) {
-
-                $filamentData = array_merge($filamentData, $dto->content[$sectionKey]->toFilamentData());
-            }
-        }
-
-        return $filamentData;
+        return $templateList;
     }
 
-    public static function fromFilamentData(array $data): self
+    public static function getTemplateSchemas(array $templates): array
     {
-        $pageData = self::fromArray($data);
+        return collect($templates)->map(fn ($class) => Group::make(self::templateSchema($class))
+            ->columnSpan(2)
+            ->afterStateHydrated(fn ($component, $state) => $component->getChildComponentContainer()->fill($state))
+            ->statePath('temp_data.'.$class::key())
+            ->visible(fn ($get) => $get('template') === $class)
+        )->toArray();
+    }
 
-        $pageData->content = [];
+    public static function mutateFormDataBeforeCreateOrUpdate(array $data): array
+    {
+        $selectedTemplateData = $data['temp_data'][$data['template']::key()];
 
-        $groupedContent = static::groupFilamentData($data['content']);
+        $groupedData = self::groupFilamentData($selectedTemplateData);
 
-        foreach (static::sections() as $sectionKey => $section) {
-            $pageData->content[$sectionKey] = (new $section)::fromArray($groupedContent[$sectionKey])->clearDefaultValues();
-        }
+        $templateInstance = $data['template']::from($groupedData);
 
-        return $pageData;
+        return [
+            'template' => $data['template'],
+            'data' => self::sift($templateInstance->toArray()),
+            ...static::extractTemplateModelProperties($data['template'], $templateInstance),
+        ];
     }
 
     public static function groupFilamentData($data): array
@@ -184,7 +117,69 @@ class Template extends TemplateBase
         return $outputArray;
     }
 
-    public static function sift(array $array, ?callable $callback = null): array
+    public static function extractTemplateModelProperties(string $template, self $templateInstance): array
+    {
+        if (! $templateInstance::$filamentResource) {
+            return $templateInstance->toArray();
+        }
+
+        $pageModel = new ((new $templateInstance::$filamentResource)->getModel());
+        $modelPropertiesToStoreInDatabase = collect(IlluminateSchema::getColumnListing($pageModel->getTable()))->filter(function ($column) use ($pageModel) {
+            $fillable = $pageModel->getFillable();
+            $guarded = $pageModel->getGuarded();
+
+            if (count($fillable) > 0 && in_array($column, $fillable)) {
+                return true;
+            }
+
+            if (count($fillable) === 0 && ! in_array($column, $guarded)) {
+                return true;
+            }
+
+            return false;
+        })->toArray();
+
+        return array_filter($templateInstance->toArray(), function ($key) use ($modelPropertiesToStoreInDatabase) {
+            return in_array($key, $modelPropertiesToStoreInDatabase);
+        }, ARRAY_FILTER_USE_KEY);
+    }
+
+    public static function mutateFormDataBeforeFill(array $data): array
+    {
+        $data = static::toFilamentData($data);
+
+        $data['temp_data'][$data['template']::key()] = $data;
+        $data['data'] = [];
+
+        return $data;
+    }
+
+    public static function toFilamentData(array $data): array
+    {
+        return [
+            'template' => $data['template'],
+            ...self::toFilamentDataRecursive($data['data']),
+        ];
+    }
+
+    public static function toFilamentDataRecursive(mixed $data, ?string $key = null): array
+    {
+        $flattenedData = [];
+
+        foreach ($data as $dataKey => $value) {
+            $currentKey = $key ? $key.'_'.$dataKey : $dataKey;
+
+            if (is_array($value)) {
+                $flattenedData = array_merge($flattenedData, self::toFilamentDataRecursive($value, $currentKey));
+            } else {
+                $flattenedData[$currentKey] = $value;
+            }
+        }
+
+        return $flattenedData;
+    }
+
+    private static function sift(array $array, ?callable $callback = null): array
     {
         $callback = $callback ?? fn ($value) => empty($value);
 
@@ -201,97 +196,58 @@ class Template extends TemplateBase
         return $array;
     }
 
-    public static function templateForm(Form $form, Collection $templates): Form
+    public function forDisplay(): self
     {
-        return $form->schema([
-            Select::make('template')
-                ->reactive()
-                ->options(Template::getTemplates($templates)),
-
-            ...Template::getTemplateSchemas($templates),
-        ]);
+        return $this->withDefaultValues();
     }
 
-    public static function schema(): array
+    public function withDefaultValues(): self
     {
-        $mainSection = ! empty(static::form()) ? [static::form()] : [];
-
-        foreach (static::sections() as $sectionKey => $section) {
-            if (! array_key_exists($sectionKey, static::DEFAULT_SECTIONS)) {
-                $mainSection[] = (new $section)::form() ?? [];
+        foreach ($this->publicProperties() as $property) {
+            if (is_subclass_of($this->{$property}, Data::class)) {
+                $this->{$property}->setDefaultValues();
             }
         }
 
-        return [Grid::make(1)->schema($mainSection)];
+        return $this;
     }
 
-    public static function form()
+    public static function beforeCreateOrUpdate(array $data): array
     {
-        return null;
-    }
-
-    public static function getTemplates(Collection $templates): Collection
-    {
-        return $templates->mapWithKeys(fn ($class) => [$class => $class::NAME]);
-    }
-
-    public static function getTemplateSchemas(Collection $templates): array
-    {
-        return $templates->map(fn ($class) => Group::make($class::schema())
-            ->columnSpan(2)
-            ->afterStateHydrated(fn ($component, $state) => $component->getChildComponentContainer()->fill($state))
-            ->statePath('temp_content.'.static::getTemplateName($class))
-            ->visible(fn ($get) => $get('template') === $class)
-        )->toArray();
-    }
-
-    public static function getTemplateName($class): string
-    {
-        return Str::of($class)->afterLast('\\')->snake()->toString();
-    }
-
-    public static function mutateFormDataBeforeFill(array $data): array
-    {
-        $data = $data['template']::toFilamentData($data);
-
-        $data['temp_content'][Template::getTemplateName($data['template'])] = $data;
-        $data['content'] = [];
-
         return $data;
     }
 
-    public static function mutateFormDataBeforeCreateOrUpdate(array $data): array
+    public static function rebuildWithPrefixedKeys(Component $component, string $prefix): Component
     {
-        $template = new ($data['template'])();
+        // If it's a container (e.g., Section, Group, etc.)
+        if (method_exists($component, 'getChildComponents') && method_exists($component, 'schema') && count($component->getChildComponents()) > 0) {
+            $newComponent = clone $component;
 
-        foreach ($template->publicProperties() as $property) {
-            if (! in_array($property, ['content', 'template'])) {
-                $data[$property] = $data['temp_content'][Template::getTemplateName($data['template'])][$property] ?? null;
-            }
+            $children = $component->getChildComponents();
+
+            $newSchema = array_map(function (Component $child) use ($prefix) {
+                return self::rebuildWithPrefixedKeys($child, $prefix);
+            }, $children);
+
+            $newComponent->schema($newSchema);
+
+            return $newComponent;
         }
 
-        $data['content'] = $data['temp_content'][Template::getTemplateName($data['template'])];
+        // If it's a Field (e.g., TextInput, Textarea, etc.)
+        if ($component instanceof Field) {
+            $originalName = $component->getName();
+            $key = "{$prefix}_{$originalName}";
 
-        unset($data['temp_content']);
+            /** @var Field $newField */
+            $newField = clone $component;
+            $newField->name($key);
+            $newField->statePath($key);
 
-        $data['content'] = $data['template']::fromFilamentData($data)->content;
-
-        $data = $template->mutateDataBeforeCreateOrUpdate($data);
-
-        foreach ($data['content'] as $key => $section) {
-            $data['content'][$key] = $section->all();
-            $data['content'][$key] = $section->mutateDataBeforeCreateOrUpdate($data['content'][$key]);
+            return $newField;
         }
 
-        $data['content'] = Template::sift($data['content']);
-
-        return $data;
+        // Return untouched if it doesn’t match expected types
+        return $component;
     }
-
-    public static function mutateDataBeforeCreateOrUpdate(array $data): array
-    {
-        return $data;
-    }
-
-    public function mutateBeforeDisplay($model): void {}
 }

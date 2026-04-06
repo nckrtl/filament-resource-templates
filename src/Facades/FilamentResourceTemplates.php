@@ -11,6 +11,6 @@ class FilamentResourceTemplates extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \NckRtl\FilamentResourceTemplates\Template::class;
+        return \NckRtl\FilamentResourceTemplates\TemplateOLD::class;
     }
 }

@@ -1,13 +1,20 @@
 <?php
 
-namespace NckRtl\FilamentResourceTemplates;
+namespace NckRtl\FilamentResourceTemplates\OLD;
 
+use Filament\Forms\Components\Component;
+use Filament\Forms\Components\Section;
+use NckRtl\FilamentResourceTemplates\Traits\HasPublicProperties;
 use ReflectionClass;
 use ReflectionNamedType;
 
-class TemplateSection extends TemplateBase
+class SectionTemplate
 {
-    const SECTION_KEY = '';
+    use HasPublicProperties;
+
+    const KEY = 'section';
+
+    const LABEL = 'Section';
 
     final public function __construct(array $properties = [])
     {
@@ -38,7 +45,11 @@ class TemplateSection extends TemplateBase
                 $this->$propertyName = new $className($propertyValue ?? []);
             }
         }
+
+        $this->setDefaultValues();
     }
+
+    public function setDefaultValues(): void {}
 
     public function defaultOverrides(): array
     {
@@ -50,20 +61,27 @@ class TemplateSection extends TemplateBase
         return $this->defaultOverrides()[$key] ?? null;
     }
 
-    public static function key(string $key): string
-    {
-        return static::SECTION_KEY."_{$key}";
-    }
-
     public function defaultValue($key): mixed
     {
         return $this->defaultOverrides()[$key] ?? $this->publicProperty($key)?->getDefaultValue();
     }
 
+    // public static function schama(): Component
+    // {
+    //     return Section::make(static::KEY)
+    //         ->heading(static::LABEL)
+    //         ->schema(static::schema());
+    // }
+
+    public static function schema(): array
+    {
+        return [];
+    }
+
     public function toFilamentData($class = null, $parentKey = null): array
     {
         $class = $class ?? $this;
-        $parentKey = $parentKey ?? static::SECTION_KEY;
+        $parentKey = $parentKey ?? static::KEY;
 
         $data = [];
         $properties = collect(get_object_vars($class))
@@ -114,6 +132,7 @@ class TemplateSection extends TemplateBase
 
     public function clearDefaultValues(): self
     {
+
         foreach ($this->publicProperties() as $property) {
             if (gettype($property) === 'string') {
                 $property = (new ReflectionClass($this))->getProperty($property);

@@ -1,8 +1,8 @@
 <?php
 
-namespace NckRtl\FilamentResourceTemplates;
+namespace NckRtl\FilamentResourceTemplates\OLD;
 
-class TemplateComponent extends TemplateBase
+class TemplateComponent extends TemplateBaseOLD
 {
     public function __construct(array $properties = [])
     {

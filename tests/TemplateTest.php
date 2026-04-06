@@ -1,16 +1,16 @@
 <?php
 
-use NckRtl\FilamentResourceTemplates\Template;
+use NckRtl\FilamentResourceTemplates\TemplateOLD;
 use NckRtl\FilamentResourceTemplates\Tests\MockClasses\MockModel;
 use NckRtl\FilamentResourceTemplates\Tests\MockClasses\MockSection;
 use NckRtl\FilamentResourceTemplates\Tests\MockClasses\MockTemplate;
 
 it('constructor initializes properties correctly', function () {
-    $properties = ['template' => 'default', 'content' => ['mock' => ['text' => 'value']]];
+    $properties = ['template' => 'default', 'data' => ['mock' => ['text' => 'value']]];
     $template = new MockTemplate($properties);
 
     expect($template->template)->toBe('default');
-    expect($template->content)->toBe(['mock' => ['text' => 'value']]);
+    expect($template->data)->toBe(['mock' => ['text' => 'value']]);
 });
 
 it('sections method returns correct sections', function () {
@@ -19,23 +19,23 @@ it('sections method returns correct sections', function () {
     expect($sections)->toBe([MockSection::SECTION_KEY => MockSection::class]);
 });
 
-it('convertContent method works correctly', function () {
-    $template = new MockTemplate(['template' => 'default', 'content' => ['mock' => ['text' => 'value']]]);
-    $template->convertContent();
+it('convertData method works correctly', function () {
+    $template = new MockTemplate(['template' => 'default', 'data' => ['mock' => ['text' => 'value']]]);
+    $template->convertData();
 
-    expect($template->content['mock'])->toBeInstanceOf(MockSection::class);
+    expect($template->data['mock'])->toBeInstanceOf(MockSection::class);
 });
 
 it('fromArray method converts model to template instance', function () {
-    $model = new MockModel(['template' => 'default', 'content' => ['mock' => ['text' => 'value']]]);
+    $model = new MockModel(['template' => 'default', 'data' => ['mock' => ['text' => 'value']]]);
     $template = MockTemplate::fromArray($model);
 
-    expect($template)->toBeInstanceOf(Template::class);
+    expect($template)->toBeInstanceOf(TemplateOLD::class);
     expect($template->template)->toBe('default');
 });
 
 it('fromModel method converts model to template instance', function () {
-    $model = new MockModel(['template' => 'default', 'content' => ['mock' => ['text' => 'value']]]);
+    $model = new MockModel(['template' => 'default', 'data' => ['mock' => ['text' => 'value']]]);
     $template = MockTemplate::fromModel($model);
 
     expect($template)->toBeInstanceOf(MockTemplate::class);
@@ -43,58 +43,58 @@ it('fromModel method converts model to template instance', function () {
 });
 
 it('toFilamentData method returns correct data', function () {
-    $data = ['template' => 'default', 'content' => ['mock' => ['text' => 'value']]];
+    $data = ['template' => 'default', 'data' => ['mock' => ['text' => 'value']]];
 
     $template = MockTemplate::fromArray($data);
 
-    $filamentData = Template::toFilamentData($data);
+    $filamentData = TemplateOLD::toFilamentData($data);
 
     expect($filamentData)->toBeArray();
     expect($filamentData)->toHaveKey('template', 'default');
 });
 
 it('fromFilamentData method works correctly', function () {
-    $data = ['template' => 'default', 'content' => ['mock' => ['text' => 'value']]];
+    $data = ['template' => 'default', 'data' => ['mock' => ['text' => 'value']]];
 
     $template = MockTemplate::fromFilamentData($data);
 
-    expect($template)->toBeInstanceOf(Template::class);
-    expect($template->content['mock'])->toBeInstanceOf(MockSection::class);
+    expect($template)->toBeInstanceOf(TemplateOLD::class);
+    expect($template->data['mock'])->toBeInstanceOf(MockSection::class);
 });
 
 it('groupFilamentData method works correctly', function () {
     $data = ['mock_key' => 'value'];
-    $groupedData = Template::groupFilamentData($data);
+    $groupedData = TemplateOLD::groupFilamentData($data);
 
     expect($groupedData['mock']['key'])->toBe('value');
 });
 
 it('sift method works correctly', function () {
     $data = ['key1' => '', 'key2' => ['subkey1' => '', 'subkey2' => 'value']];
-    $filteredData = Template::sift($data);
+    $filteredData = TemplateOLD::sift($data);
 
     expect($filteredData)->toBe(['key2' => ['subkey2' => 'value']]);
 });
 
 it('mutateFormDataBeforeFill method works correctly', function () {
-    $data = ['template' => 'NckRtl\FilamentResourceTemplates\Tests\MockClasses\MockTemplate', 'content' => ['mock' => ['text' => 'value']]];
+    $data = ['template' => 'NckRtl\FilamentResourceTemplates\Tests\MockClasses\MockTemplate', 'data' => ['mock' => ['text' => 'value']]];
 
     $template = MockTemplate::fromFilamentData($data);
 
     $mutatedData = $template::mutateFormDataBeforeFill($data);
 
-    expect($mutatedData['content'])->toBe([]);
+    expect($mutatedData['data'])->toBe([]);
 });
 
 it('mutateFormDataBeforeCreateOrUpdate method works correctly', function () {
     $data = [
         'template' => MockTemplate::class,
-        'temp_content' => [
+        'temp_data' => [
             'mock_template' => ['mock' => ['text' => 'value not equal to default value']],
         ],
     ];
 
-    $mutatedData = Template::mutateFormDataBeforeCreateOrUpdate($data);
+    $mutatedData = TemplateOLD::mutateFormDataBeforeCreateOrUpdate($data);
 
-    expect($mutatedData['content'])->toBe(['mock' => ['text' => 'value not equal to default value']]);
+    expect($mutatedData['data'])->toBe(['mock' => ['text' => 'value not equal to default value']]);
 });

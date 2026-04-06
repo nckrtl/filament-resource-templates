@@ -1,12 +1,12 @@
 <?php
 
-namespace NckRtl\FilamentResourceTemplates;
+namespace NckRtl\FilamentResourceTemplates\OLD;
 
 use ReflectionClass;
 use ReflectionProperty;
 use Spatie\LaravelData\Data;
 
-class TemplateBase extends Data
+class TemplateBaseOLD extends Data
 {
     public function publicProperties($fullProperty = false): array
     {

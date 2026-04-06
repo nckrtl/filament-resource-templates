@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+This package is written to be used with Laravel and Filament. It provides functionality to add template support to Filament resources. More info on how this package should be applied in a Laravel/Filament project can be found in the README.md in the root of the project.
+
+Currently support versions:
+- Laravel v12
+- Filament v3
+- Laravel Data v4
