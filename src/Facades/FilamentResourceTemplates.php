@@ -3,6 +3,7 @@
 namespace NckRtl\FilamentResourceTemplates\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use NckRtl\FilamentResourceTemplates\TemplateOLD;
 
 /**
  * @see \NckRtl\FilamentResourceTemplates\FilamentResourceTemplates
@@ -11,6 +12,6 @@ class FilamentResourceTemplates extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \NckRtl\FilamentResourceTemplates\TemplateOLD::class;
+        return TemplateOLD::class;
     }
 }
