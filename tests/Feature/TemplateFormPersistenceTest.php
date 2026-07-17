@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace NckRtl\FilamentResourceTemplates\Tests\Feature;
 
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Section;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -80,6 +83,20 @@ it('hydrates model and nested json values into transient form state', function (
         ]);
 });
 
+it('prefixes fields nested inside section components before they have a livewire container', function (): void {
+    $components = Template::templateSchema(ArticleTemplate::class);
+    $section = collect($components)
+        ->first(fn (Component $component): bool => $component instanceof Section && $component->getHeading() === 'SEO');
+
+    expect($section)->toBeInstanceOf(Section::class)
+        ->and(collect($section->getDefaultChildComponents())
+            ->filter(fn (mixed $component): bool => $component instanceof TextInput)
+            ->map(fn (TextInput $component): string => $component->getName())
+            ->values()
+            ->all())
+        ->toBe(['seo_title', 'seo_description']);
+});
+
 final class SeoSection extends SectionTemplate
 {
     public function __construct(
@@ -90,6 +107,18 @@ final class SeoSection extends SectionTemplate
     public static function key(): string
     {
         return 'seo';
+    }
+
+    /** @return array<int, Component> */
+    public static function schema(): array
+    {
+        return [
+            Section::make('SEO')
+                ->schema([
+                    TextInput::make('title'),
+                    TextInput::make('description'),
+                ]),
+        ];
     }
 }
 

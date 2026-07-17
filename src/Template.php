@@ -241,12 +241,14 @@ abstract class Template extends Data implements HasTemplateProperties
 
     public static function rebuildWithPrefixedKeys(Component $component, string $prefix): Component
     {
-        $children = $component->getChildComponents();
+        $children = $component->getDefaultChildComponents();
 
-        if ($children !== []) {
+        if (is_array($children) && $children !== []) {
             $newComponent = clone $component;
             $newComponent->schema(array_map(
-                fn (Component $child): Component => static::rebuildWithPrefixedKeys($child, $prefix),
+                fn (mixed $child): mixed => $child instanceof Component
+                    ? static::rebuildWithPrefixedKeys($child, $prefix)
+                    : $child,
                 $children,
             ));
 
