@@ -40,10 +40,13 @@ it('hydrates registered templates from model and nested json values', function (
 
     expect($template)
         ->toBeInstanceOf(HomeTemplate::class)
-        ->and($template->title)->toBe('Database title')
-        ->and($template->seo)->toBeInstanceOf(SeoData::class)
-        ->and($template->seo->title)->toBe('SEO title')
-        ->and($template->seo->description)->toBe('SEO description');
+        ->and($template->toArray())->toBe([
+            'title' => 'Database title',
+            'seo' => [
+                'title' => 'SEO title',
+                'description' => 'SEO description',
+            ],
+        ]);
 });
 
 it('rejects template classes that are not registered for the model', function (): void {

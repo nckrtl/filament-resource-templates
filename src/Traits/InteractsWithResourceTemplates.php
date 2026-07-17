@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace NckRtl\FilamentResourceTemplates\Traits;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use NckRtl\FilamentResourceTemplates\Exceptions\InvalidStoredTemplate;
 use NckRtl\FilamentResourceTemplates\Template;
@@ -13,7 +12,6 @@ trait InteractsWithResourceTemplates
 {
     public function resourceTemplate(): Template
     {
-        /** @var Model $this */
         $template = $this->getAttribute('template');
 
         if (
