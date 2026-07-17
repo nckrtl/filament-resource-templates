@@ -5,6 +5,7 @@ namespace NckRtl\FilamentResourceTemplates\Tests;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use NckRtl\FilamentResourceTemplates\FilamentResourceTemplatesServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Spatie\LaravelData\LaravelDataServiceProvider;
 
 class TestCase extends Orchestra
 {
@@ -20,6 +21,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
+            LaravelDataServiceProvider::class,
             FilamentResourceTemplatesServiceProvider::class,
         ];
     }
