@@ -38,6 +38,11 @@ abstract class Template extends Data implements HasTemplateProperties
         return [];
     }
 
+    public static function hasEmbeddedSections(): bool
+    {
+        return false;
+    }
+
     public static function key(): string
     {
         return Str::snake(class_basename(static::class));
@@ -73,6 +78,10 @@ abstract class Template extends Data implements HasTemplateProperties
     public static function templateSchema(string $template): array
     {
         $schema = $template::schema();
+
+        if ($template::hasEmbeddedSections()) {
+            return $schema;
+        }
 
         foreach ($template::sections() as $section) {
             foreach ($section::schema() as $component) {

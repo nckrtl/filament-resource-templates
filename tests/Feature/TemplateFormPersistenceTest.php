@@ -97,6 +97,17 @@ it('prefixes fields nested inside section components before they have a livewire
         ->toBe(['seo_title', 'seo_description']);
 });
 
+it('allows templates to embed their configured sections in a custom layout', function (): void {
+    $components = Template::templateSchema(EmbeddedArticleTemplate::class);
+
+    expect(collect($components)
+        ->filter(fn (Component $component): bool => $component instanceof Section)
+        ->map(fn (Section $component): string => (string) $component->getHeading())
+        ->values()
+        ->all())
+        ->toBe(['Article']);
+});
+
 final class SeoSection extends SectionTemplate
 {
     public function __construct(
@@ -135,6 +146,43 @@ final class ArticleTemplate extends Template
     public static function key(): string
     {
         return 'article';
+    }
+
+    /** @return array<int, class-string<SectionTemplate>> */
+    public static function sections(): array
+    {
+        return [SeoSection::class];
+    }
+}
+
+final class EmbeddedArticleTemplate extends Template
+{
+    public static string $filamentResource = FormArticleResource::class;
+
+    public function __construct(
+        public string $title,
+        public ?string $published_at,
+        public SeoSection $seo,
+    ) {}
+
+    /** @return array<int, Component> */
+    public static function schema(): array
+    {
+        return [
+            Section::make('Article')
+                ->schema([
+                    TextInput::make('title'),
+                    ...array_map(
+                        fn (Component $component): Component => self::rebuildWithPrefixedKeys($component, SeoSection::key()),
+                        SeoSection::schema(),
+                    ),
+                ]),
+        ];
+    }
+
+    public static function hasEmbeddedSections(): bool
+    {
+        return true;
     }
 
     /** @return array<int, class-string<SectionTemplate>> */
